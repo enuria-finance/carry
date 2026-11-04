@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Carry: coach de League of Legends para PC. Analisa suas ranqueadas, monta runas e avisa o que importa durante a partida.">
+<title>Carry Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: uma coluna larga com faixas; a cena do jogo (minimapa + balão de aviso) é o herói. Tema único escuro, igual ao app. */
+:root{
+  --bg:#120D0E; --bg2:#1A1214; --line:#2E2224; --ink:#F2EAE3; --mute:#A89A92;
+  --red:#D7263D; --red2:#FF5468; --gold:#E9C46A; --ok:#6BBF8A;
+  --head:'Barlow Condensed','Arial Narrow',Arial,sans-serif; --body:'Barlow','Segoe UI',Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--red2)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+h1,h2,h3{font-family:var(--head);line-height:1;text-wrap:balance;margin:0}
+.kick{font:700 13px var(--head);letter-spacing:.14em;text-transform:uppercase;color:var(--red2)}
+/* topo */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:22px}
+.logo{display:flex;align-items:center;gap:10px;font:800 26px var(--head);letter-spacing:.06em}
+.logo svg{width:30px;height:30px}
+.top nav{display:flex;gap:18px;flex-wrap:wrap}
+.top nav a{color:var(--mute);text-decoration:none;font-weight:500}
+.top nav a:hover{color:var(--ink)}
+/* herói */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:center;padding-block:36px 56px}
+.hero h1{font-size:clamp(46px,7vw,84px);font-weight:800;letter-spacing:-.01em;text-transform:uppercase}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero p.lead{font-size:19px;color:#D9CDC4;max-width:34em;margin:18px 0 26px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:12px;font:700 18px var(--head);letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border:1px solid transparent}
+.btn.main{background:var(--red);color:#fff}
+.btn.main[aria-disabled="true"]{background:#3a2629;color:#cdb9b2;cursor:not-allowed}
+.btn.ghost{border-color:var(--line);color:var(--ink)}
+.note{font-size:13.5px;color:var(--mute)}
+/* cena */
+.scene{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(120% 90% at 30% 30%,#2b3a2c 0,#1a251d 50%,#0f1612 100%)}
+.scene::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(135deg,transparent 45%,rgba(70,110,150,.35) 46% 54%,transparent 55%),
+  repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 36px)}
+.mm{position:absolute;right:4%;bottom:5%;width:38%;aspect-ratio:1;border-radius:6px;border:2px solid #4a3c2a;
+  background:linear-gradient(135deg,#1f3524,#152419);overflow:hidden}
+.mm::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(45deg,transparent 47%,#6b6a4a 47.5% 52.5%,transparent 53%),
+  linear-gradient(-45deg,transparent 46%,rgba(80,130,170,.6) 47% 53%,transparent 54%)}
+.mm .lane{position:absolute;background:#6b6a4a}
+.mm .t1{left:7%;top:7%;width:5%;height:80%}.mm .t2{left:7%;top:7%;width:80%;height:5%}
+.mm .b1{left:13%;bottom:7%;width:80%;height:5%}.mm .b2{right:7%;top:13%;width:5%;height:80%}
+.dot{position:absolute;width:13%;aspect-ratio:1;border-radius:50%;border:3px solid;transform:translate(-50%,-50%)}
+.dot.foe{border-color:#e0404f;background:#4a1d22;left:30%;top:24%}
+.dot.me{border-color:var(--gold);background:#4b3e1c;left:50%;top:50%}
+.dot.foe::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid #e0404f;opacity:.6;animation:ping 1.8s ease-out infinite}
+@keyframes ping{from{transform:scale(.6);opacity:.8}to{transform:scale(1.4);opacity:0}}
+.bub{position:absolute;right:4%;bottom:calc(5% + 38% + 14px);display:flex;align-items:center;gap:10px;max-width:72%;
+  background:#1B1112;border:2px solid var(--red);border-radius:14px;padding:10px 14px 10px 10px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.bub i{flex:none;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;font:800 15px var(--head);display:flex;align-items:center;justify-content:center;font-style:normal}
+.bub span{font-weight:600;font-size:15px;line-height:1.3}
+.eb{position:absolute;left:4%;top:6%;display:grid;grid-template-columns:repeat(4,26px);gap:3px;background:#12141b;padding:5px;border-radius:8px}
+.eb b{width:26px;height:26px;border-radius:4px;background:#2A1F1E;display:flex;align-items:center;justify-content:center;font:600 11px var(--body);color:#ede7dc}
+.eb b.c{background:#000;color:#fff}.eb b.ch{background:#3b2a2c;color:var(--gold)}
+@media (prefers-reduced-motion:reduce){.dot.foe::after{animation:none}}
+/* faixas */
+section{padding-block:56px;border-top:1px solid var(--line)}
+section h2{font-size:clamp(34px,4.6vw,52px);text-transform:uppercase;font-weight:800;margin:6px 0 10px}
+section > .wrap > p.sub{color:var(--mute);max-width:46em;margin:0 0 28px}
+.moments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.moment{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:22px}
+.moment h3{font-size:26px;text-transform:uppercase;margin-bottom:10px}
+.moment ul{margin:0;padding-left:18px;color:#D9CDC4;display:grid;gap:7px}
+.moment .when{font:700 12px var(--head);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.lines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.line{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:#1B1112;border:1px solid var(--line)}
+.line i{flex:none;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font:800 13px var(--head);display:flex;align-items:center;justify-content:center;font-style:normal;margin-top:2px}
+.line b{display:block;font-weight:600}.line small{color:var(--mute);font-size:13.5px}
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;align-items:start;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px}
+ol.steps li::before{content:counter(s);font:800 30px var(--head);color:var(--red);line-height:1}
+ol.steps b{display:block}ol.steps span{color:#D9CDC4}
+.req{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.req span{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;color:#D9CDC4}
+.faq{display:grid;gap:10px}
+.faq details{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.faq summary{cursor:pointer;font-weight:600}
+.faq p{margin:10px 0 0;color:#D9CDC4}
+footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute);font-size:13px}
+footer p{max-width:70em;margin:0 0 8px}
+@media (max-width:860px){.hero{grid-template-columns:1fr}.moments{grid-template-columns:1fr}.lines{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <div class="logo" aria-label="Carry">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 1l3.6 11.4L31 16l-11.4 3.6L16 31l-3.6-11.4L1 16l11.4-3.6z" fill="#D7263D"/><path d="M16 8l1.8 6.2L24 16l-6.2 1.8L16 24l-1.8-6.2L8 16l6.2-1.8z" fill="#F2EAE3"/></svg>
+    CARRY
+  </div>
+  <nav aria-label="Seções"><a href="#o-que-faz">O que faz</a><a href="#instalar">Instalar</a><a href="#duvidas">Dúvidas</a></nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="kick">Coach de League of Legends para PC</div>
+      <h1>Um coach que fala <em>na hora certa</em></h1>
+      <p class="lead">O Carry acompanha suas ranqueadas: analisa seu histórico, monta suas runas na seleção e, dentro da partida, avisa só o que muda a jogada. Jungler chegando, objetivo nascendo, item pronto para comprar.</p>
+      <div class="cta">
+        <a class="btn main" id="dl" href="https://drive.google.com/file/d/1VePMtx1hp3lfpze_oNDcOxIfQ6LaW5Di/view?usp=sharing" target="_blank" rel="noopener">Baixar o Carry</a>
+        <a class="btn ghost" href="#o-que-faz">Ver o que ele faz</a>
+      </div>
+      <p class="note">Grátis · Windows 10 e 11 · Usa a API oficial da Riot e o Data Dragon</p>
+    </div>
+    <div class="scene" role="img" aria-label="Exemplo dentro do jogo: o minimapa mostra o jungler inimigo perto e um balão do Carry avisa">
+      <div class="eb" aria-hidden="true"><b class="ch">Ga</b><b>Fl</b><b class="c">3:12</b><b>R</b><b class="ch">Le</b><b class="c">58</b><b>In</b><b>R</b></div>
+      <div class="bub"><i>C</i><span>Cuidado, jungler deles perto: no rio de baixo.</span></div>
+      <div class="mm" aria-hidden="true"><span class="lane t1"></span><span class="lane t2"></span><span class="lane b1"></span><span class="lane b2"></span><span class="dot foe"></span><span class="dot me"></span></div>
+    </div>
+  </div>
+
+  <section id="o-que-faz">
+    <div class="wrap">
+      <div class="kick">Do lobby ao fim da partida</div>
+      <h2>O que o Carry faz</h2>
+      <p class="sub">Tudo se adapta ao que você joga: sua rota, seu main e seu elo. Você não precisa clicar em nada durante a partida.</p>
+      <div class="moments">
+        <article class="moment">
+          <div class="when">Fora do jogo</div>
+          <h3>Entenda seu jogo</h3>
+          <ul>
+            <li>Histórico completo: winrate por campeão, rota, horário e oponente</li>
+            <li>Gráfico de PDL com zoom e o ganho ou perda de cada partida</li>
+            <li>Resumo do dia, com aviso de tilt</li>
+            <li>Seus erros mais caros e o que treinar</li>
+            <li>Build e runas dos melhores, tier list, duelos e patch</li>
+            <li>Coach com IA que responde com base nas suas partidas</li>
+          </ul>
+        </article>
+        <article class="moment">
+          <div class="when">Seleção de campeões</div>
+          <h3>Entre pronto</h3>
+          <ul>
+            <li>Sugestão de ban e pick pelo seu histórico e pela composição</li>
+            <li>Runas montadas sozinho quando você trava o campeão</li>
+            <li>Itens dos melhores na loja do jogo</li>
+            <li>Elo, winrate e maestria do time inimigo, e quem está de duo</li>
+            <li>Plano da partida falado: o duelo, o perigo e o seu pico</li>
+          </ul>
+        </article>
+        <article class="moment">
+          <div class="when">Dentro do jogo</div>
+          <h3>Ouça só o necessário</h3>
+          <ul>
+            <li>Voz e um balão curto que some sozinho</li>
+            <li>Objetivos chegando e quando voltar para a base antes</li>
+            <li>Próximo item quando o ouro fecha, ajustado contra o time deles</li>
+            <li>Dicas do seu campeão no momento certo</li>
+            <li>Macro: agrupar, forçar objetivo, recuar</li>
+            <li>Pergunte por voz: "o que eu faço agora?"</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="kick">Exemplos reais de aviso</div>
+      <h2>Frases curtas, na hora certa</h2>
+      <p class="sub">O Carry fala uma coisa de cada vez e fica quieto nas lutas grandes. Cada aviso pode ser desligado.</p>
+      <div class="lines">
+        <div class="line"><i>C</i><div><b>"Já montei sua página de runas: Eletrocutar, com Feitiçaria na secundária."</b><small>Ao travar o campeão</small></div></div>
+        <div class="line"><i>C</i><div><b>"Dragão em um minuto e meio: volte agora, compre e chegue com controle de visão."</b><small>Antes do objetivo, com ouro sobrando</small></div></div>
+        <div class="line"><i>C</i><div><b>"Já dá pra comprar Lorde Dominik. Volte quando a onda deixar."</b><small>Quando o ouro fecha o próximo item</small></div></div>
+        <div class="line"><i>C</i><div><b>"Caçador deles morto: peguem o Dragão agora."</b><small>Janela de objetivo</small></div></div>
+        <div class="line"><i>C</i><div><b>"Nível 6: sua ultimate está pronta."</b><small>Dica do seu campeão, para qualquer campeão</small></div></div>
+        <div class="line"><i>C</i><div><b>"2 a menos. Recue, não lute."</b><small>Desvantagem numérica</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="instalar">
+    <div class="wrap">
+      <div class="kick">Leva uns 2 minutos</div>
+      <h2>Como instalar</h2>
+      <ol class="steps">
+        <li><div><b>Baixe o instalador</b><span><a href="https://drive.google.com/file/d/1VePMtx1hp3lfpze_oNDcOxIfQ6LaW5Di/view?usp=sharing" target="_blank" rel="noopener">Baixe pelo Google Drive</a> (botão de download no canto de cima), abra o .zip e dê dois cliques em Carry-Setup.</span></div></li>
+        <li><div><b>Passe pelo aviso do Windows</b><span>Como o app é novo e não tem assinatura paga, o Windows mostra um aviso azul. Clique em "Mais informações" e depois em "Executar assim mesmo".</span></div></li>
+        <li><div><b>Siga o instalador</b><span>Se faltar o Python, ele baixa e instala sozinho. No fim, o Carry abre no navegador com um passo a passo.</span></div></li>
+        <li><div><b>Crie sua conta e vincule seu Riot ID</b><span>O app descobre seu main pela maestria e pelas partidas, e você confirma.</span></div></li>
+        <li><div><b>Jogue com o LoL em modo Sem bordas</b><span>Configurações do jogo &gt; Vídeo &gt; Modo de janela. Em tela cheia o overlay não aparece.</span></div></li>
+      </ol>
+      <div class="req" aria-label="Requisitos"><span>Windows 10 ou 11 (64 bits)</span><span>League of Legends instalado</span><span>Internet</span><span>Microfone opcional</span></div>
+    </div>
+  </section>
+
+  <section id="duvidas">
+    <div class="wrap">
+      <div class="kick">Antes de baixar</div>
+      <h2>Dúvidas</h2>
+      <div class="faq">
+        <details><summary>É pago?</summary><p>Não. O Carry é gratuito.</p></details>
+        <details><summary>Onde ficam meus dados?</summary><p>No seu computador. Suas partidas, configurações e chaves ficam numa pasta local; o app não tem servidor próprio. Ele só conversa com a API oficial da Riot, com o Data Dragon e, se você ativar, com o serviço de IA e de voz que você escolher.</p></details>
+        <details><summary>Ele joga por mim ou mexe no jogo?</summary><p>Não. O Carry não aperta teclas, não altera arquivos do jogo e não lê a memória do jogo. Ele usa os dados que o próprio LoL disponibiliza para apps (cliente e partida ao vivo) e mostra avisos por cima, num overlay. O aviso opcional de jungler visto (beta) olha só a imagem do seu minimapa na tela, e o contador de Flash e ult dos inimigos é marcado por você com um clique.</p></details>
+        <details><summary>Preciso deixar alguma janela aberta?</summary><p>Não. Depois de instalado, o Carry liga com o Windows e fica em segundo plano. O overlay aparece sozinho quando a partida começa.</p></details>
+        <details><summary>Dá para desligar a voz ou algum aviso?</summary><p>Sim. Na página Editar overlay cada aviso tem um botão, e o modo "só o necessário" já vem ligado.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Carry · coach de League of Legends para PC.</p>
+    <p>Carry isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
+  </div>
+</footer>
+
+<script>
+</script>
+
+</body>
+</html>
