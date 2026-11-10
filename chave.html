@@ -180,11 +180,12 @@ footer p{margin:0 0 10px;max-width:900px}
 .mock .side li{padding:5px 12px;color:#9a9a9a}.mock .side li.on{color:#fff;box-shadow:inset 2px 0 0 var(--red)}
 .after{margin-top:56px}
 .after h2{font-size:clamp(36px,5vw,56px)}
-.after .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:28px}
+.after .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:28px}
 .after .grid div{background:var(--card);padding:24px 26px}
 .after .grid b{display:block;font:800 22px/1.1 var(--h);text-transform:uppercase}
 .after .grid p{color:#bdbdbd;margin:8px 0 0}
 @media (max-width:1000px){.gs>li{grid-template-columns:72px minmax(0,1fr)}.gs .im{grid-column:2;border-left:0;border-top:1px solid var(--line)}}
+@media (max-width:900px){.after .grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.gs>li{grid-template-columns:minmax(0,1fr)}.gs>li::before{justify-content:start;padding:18px 22px 0;border-right:0;font-size:32px}.gs .im{grid-column:1}.after .grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -216,7 +217,6 @@ footer p{margin:0 0 10px;max-width:900px}
         <h2>Depois de colar</h2>
         <div class="grid">
           <div><b>A chave vence em 24 horas</b><p>A chave de desenvolvimento dura 1 dia. Quando o Carry avisar "chave vencida", volte ao passo 4, gere outra e cole de novo.</p></div>
-          <div><b>Quer uma que não vence?</b><p>No mesmo site, clique em <b style="display:inline;font:inherit;text-transform:none;color:#fff">Register Product</b> e escolha <b style="display:inline;font:inherit;text-transform:none;color:#fff">Personal API Key</b>. A Riot analisa o pedido, o que pode levar alguns dias.</p></div>
           <div><b>Deu "chave recusada"?</b><p>Confira se copiou a chave inteira, começando em <code style="background:#151515;border:1px solid #333;padding:1px 6px">RGAPI-</code>, sem espaço no começo ou no fim. Se a chave tiver vencido, gere outra.</p></div>
           <div><b>É seguro?</b><p>A chave fica só no seu computador. O Carry não tem servidor e usa a chave apenas para falar com a Riot.</p></div>
         </div>
